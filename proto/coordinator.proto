@@ -1,0 +1,130 @@
+syntax = "proto3";
+package coordinatorpb;
+
+service Coordinator {
+    // scheduler -> coordinator
+    rpc PutPodResource(PutPodResourceRequest) returns (PutPodResourceResponse);
+    // scheduler -> coordinator
+    rpc GetNodeResource(GetNodeResourceRequest) returns(GetNodeResourceResponse);
+    // executor -> coordinator
+    rpc PutNodeResource(PutNodeResourceRequest) returns (PutNodeResourceResponse);
+    // executor -> coordinator
+    rpc PutPV(PutPVRequest) returns (PutPVResponse);
+}
+
+message RequestHeader {
+    // the node id of the sender
+    string node_id = 1;
+}
+
+message ResponseHeader {
+    string node_id = 1;
+    Error error = 2;
+}
+
+enum ErrorType {
+    OK = 0;
+    UNKNOWN = 1;
+    NO_NODE = 2;
+    NO_PV = 3;
+    INTERNAL_ERROR = 4;
+    INVALID_PARAMETER = 5;
+}
+
+message Error {
+    ErrorType type = 1;
+    string message = 2;
+}
+
+enum StorageType {
+    STORAGE = 0;
+    LIMIT = 1;
+
+}
+
+message Resource {
+    StorageType type = 1; // storage or limit
+    string kind = 2; // size  or read_bps or write_bps
+    uint64 size = 3; // 1000
+    Unit unit = 4; // unit of the resource
+}
+
+message PVC {
+    string name = 1; //request pv name pvc - pv->1:1
+    repeated Resource resource = 2;  //request resource info
+}
+
+message PutPodResourceRequest {
+    RequestHeader header = 1;
+    string name = 2; // pod name
+    string namespace = 3;
+    repeated PVC pvc = 4; // request pvc info
+}
+
+message PutPodResourceResponse {
+    ResponseHeader header = 1;
+}
+
+enum Unit {
+    B = 0;
+    KB = 1;
+    MB = 2;
+    GB = 3;
+    C = 4; //count
+}
+
+enum StorageLevel {
+    HDD = 0;
+    SSD = 1;
+    NVM = 2;
+} 
+
+message Storage {
+    string node = 1;
+    string name = 2;  //volumegroup name
+    StorageLevel level = 3; //level ssd hdd nvm
+    repeated Resource resource = 4; // storage size 1000GB limit bps 1024KB
+}
+
+message PutNodeResourceRequest {
+    RequestHeader header = 1;
+    repeated Storage storage = 2;
+}
+
+message PutNodeResourceResponse {
+    ResponseHeader header = 1;
+}
+
+// return all the node's resource or one node resource
+// if header.node_id = "all",then return all
+message GetNodeResourceRequest {
+    RequestHeader header = 1;
+}
+
+message GetNodeResourceResponse {
+    ResponseHeader header = 1;
+    repeated Storage storage = 2;
+}
+
+// TODO
+// don't know is it need volumegroup
+message Device {
+    string name = 1;  //device name
+    uint64 maj = 2;   // maj deivice number
+    uint64 min = 3;   // min device number
+    string id = 4; // vol id;
+    string path = 5; //device path or device mapper path 
+    string vg = 6; // volume group
+}
+
+message PutPVRequest {
+    RequestHeader header = 1;
+    string name = 2; // the name of the pv
+    Device device = 3; // the info of the device
+}
+
+// return if it is ok
+message PutPVResponse {
+    ResponseHeader header = 1;
+}
+

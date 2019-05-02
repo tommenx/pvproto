@@ -1,0 +1,70 @@
+syntax = "proto3";
+package executorpb;
+
+service executor {
+    rpc PutIsolation(PutIsolationRequest) returns (PutIsolationResponse);
+}
+
+message RequestHeader {
+    // the node id of the sender
+    string node_id = 1;
+}
+
+message ResponseHeader {
+    string node_id = 1;
+    Error error = 2;
+}
+
+enum ErrorType {
+    OK = 0;
+    UNKNOWN = 1;
+    NO_NODE = 2;
+    NO_PV = 3;
+    INTERNAL_ERROR = 4;
+    INVALID_PARAMETER = 5;
+}
+
+message Error {
+    ErrorType type = 1;
+    string message = 2;
+}
+
+enum StorageType {
+    STORAGE = 0;
+    LIMIT = 1;
+
+}
+
+message Resource {
+    StorageType type = 1; // storage or limit
+    string kind = 2; // size  or read_bps or write_bps
+    uint64 size = 3; // 1000
+    Unit unit = 4; // unit of the resource
+}
+
+enum Unit {
+    B = 0;
+    KB = 1;
+    MB = 2;
+    GB = 3;
+    C = 4; //count
+}
+
+message Device {
+    string name = 1;  //device name
+    uint64 maj = 2;   // maj deivice number
+    uint64 min = 3;   // min device number
+    string id = 4; // vol id;
+    string path = 5; //device path or device mapper path 
+    string vg = 6; // volume group
+}
+
+message PutIsolationRequest {
+    RequestHeader header = 1;
+    Device deivice = 2;
+    repeated Resource Resource = 3;
+}
+
+message PutIsolationResponse {
+    ResponseHeader header = 1;
+}
